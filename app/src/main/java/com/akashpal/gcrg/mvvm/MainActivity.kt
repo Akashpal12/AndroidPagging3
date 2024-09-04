@@ -14,12 +14,23 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.akashpal.gcrg.mvvm.adapter.PostAdapter
 import com.akashpal.gcrg.mvvm.api.RetrofitClient
+import com.akashpal.gcrg.mvvm.api.RetrofitClientCart
 import com.akashpal.gcrg.mvvm.databinding.ActivityMainBinding
+import com.akashpal.gcrg.mvvm.models.Request
+import com.akashpal.gcrg.mvvm.models.RequestContainer
+import com.akashpal.gcrg.mvvm.models.RequestData
+import com.akashpal.gcrg.mvvm.repository.CartRepository
+import com.akashpal.gcrg.mvvm.repository.PostBTokenRepository
 import com.akashpal.gcrg.mvvm.repository.PostRepository
+import com.akashpal.gcrg.mvvm.viewModel.CartViewModel
+import com.akashpal.gcrg.mvvm.viewModel.CartViewModelFactory
+import com.akashpal.gcrg.mvvm.viewModel.PostBTokenViewModel
+import com.akashpal.gcrg.mvvm.viewModel.PostBTokenViewModelFactory
 import com.akashpal.gcrg.mvvm.viewModel.PostViewModel
 import com.akashpal.gcrg.mvvm.viewModel.PostViewModelFactory
 
@@ -27,6 +38,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     lateinit var mainViewModel: PostViewModel
     private lateinit var postAdapter: PostAdapter
+
+
+    private lateinit var cartViewModel: CartViewModel
+    private lateinit var postBViewModel: PostBTokenViewModel
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,6 +104,80 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, SecondActivity::class.java)
             startActivity(intent)
         }
+
+
+
+
+
+        // Initialize Retrofit and Repository
+        val postCartService = RetrofitClientCart.getClient()
+        val postCartRepository = CartRepository(postCartService)
+
+        // Initialize ViewModel
+        cartViewModel = ViewModelProvider(this,
+            CartViewModelFactory(postCartRepository)).get(CartViewModel::class.java)
+
+
+        // Observe the LiveData from ViewModel
+        cartViewModel.cartResponse.observe(this, Observer { response ->
+            if (response != null) {
+                Log.d("CartResponse", "Success: ${response.d.responseMessage}")
+                // Update your UI with the response data
+            } else {
+                Log.d("CartResponse", "Error fetching data")
+            }
+        })
+
+        // Trigger the API call
+        val request = Request(
+            requestContainer = RequestContainer(
+                securityToken = "",
+                deviceId = "Andro8.5",
+                latLong = "",
+                appVersion = "yourAppVersion",
+                requestSource = "kiosk"
+            ),
+            requestData = RequestData(
+                CartAutoId = 22643
+            )
+        )
+
+        cartViewModel.fetchCartDetails(request)
+
+
+
+
+        // Initialize Retrofit and Repository
+        val postBTokenService = RetrofitClientCart.getClient()
+        val postBTokenRepository = PostBTokenRepository(postBTokenService)
+        postBViewModel=ViewModelProvider(
+            this,PostBTokenViewModelFactory(postBTokenRepository)).get(PostBTokenViewModel::class.java)
+
+
+        postBViewModel.cartResponse.observe(this, Observer { response ->
+            if (response != null) {
+                Log.d("CartResponse", "Success: ${response.d.responseMessage}")
+                // Update your UI with the response data
+            } else {
+                Log.d("CartResponse", "Error fetching data")
+            }
+        })
+
+        // Trigger the API call
+        val request1 = Request(
+            requestContainer = RequestContainer(
+                securityToken = "",
+                deviceId = "Andro8.5",
+                latLong = "",
+                appVersion = "yourAppVersion",
+                requestSource = "kiosk"
+            ),
+            requestData = RequestData(
+                CartAutoId = 22643
+            )
+        )
+
+        postBViewModel.fetchCartDetails(request,"AKajgyugvbftyf")
     }
 
 
